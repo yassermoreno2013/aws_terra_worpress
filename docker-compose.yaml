@@ -1,49 +1,34 @@
 version: '3.1'
-
 services:
-
-  db:
+  mysql:
     image: mysql:5.7
-    
-    networks: 
-      - WP-Net
-    restart: always
-    environment:
-      MYSQL_DATABASE: WPLokalDB
-      MYSQL_USER: Master
-      MYSQL_PASSWORD: Table2020!
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
     volumes:
       - /efs/db:/var/lib/mysql
-    expose: 
-      - "3306"
-
-  
-      
+    environment:
+      - MYSQL_ROOT_PASSWORD=myrootpassword
+      - MYSQL_DATABASE=mydatabase
+      - MYSQL_USER=myusername
+      - MYSQL_PASSWORD=mypassword
+    restart: always
   wordpress:
     image: wordpress:php7.3-fpm-alpine
-    networks: 
-      - WP-Net
-    expose:
-      - "9000"
     volumes:
-      - /wordpress:/var/www/html
+      - /efs/db:/var/www/html
     depends_on:
-      - db
+      - mysql
     environment:
-      - WORDPRESS_DB_HOST=db
+      - WORDPRESS_DB_HOST=mysql
       - MYSQL_ROOT_PASSWORD=myrootpassword
-      - WORDPRESS_DB_NAME=WPLokalDB
-      - WORDPRESS_DB_USER=Master
-      - WORDPRESS_DB_PASSWORD=Table2020!
+      - WORDPRESS_DB_NAME=mydatabase
+      - WORDPRESS_DB_USER=mydbuser
+      - WORDPRESS_DB_PASSWORD=mypassword
       - WORDPRESS_TABLE_PREFIX=wp_
     links:
-      - db
+      - mysql
     restart: always
-  
   phpmyadmin:
     depends_on:
-      - db
+      - mysql
     image: phpmyadmin/phpmyadmin
     restart: always
     ports:
@@ -51,31 +36,12 @@ services:
     environment:
       - PMA_HOST=mysql
       - MYSQL_ROOT_PASSWORD=myrootpassword
-  
   nginx:
     image: nginx:alpine
-    networks: 
-      - WP-Net
-    
-    ports:
-        - 80:80
     volumes:
-        - ./nginx:/etc/nginx/conf.d
-        - ./nginx:/var/log/nginx
-        - ./wordpress:/var/www/html
-    depends_on:
-        - wordpress
-    restart: always
+      - ./nginx:/etc/nginx/conf.d
+      - /efs/db:/var/www/html
+    ports:
+      - 8080:80
     links:
       - wordpress
-     
-
-networks: 
-  WP-Net:
-
-    
-volumes:
-  wordpress:
-  db:
-  nginx:
-  phpmyadmin:
