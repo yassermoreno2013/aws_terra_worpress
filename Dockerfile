@@ -1,4 +1,5 @@
 FROM wordpress:latest
 USER root
-COPY ./wordpress/wp-content/ /var/www/wordpress/wp-content/
+WORKDIR /efs/wordpress/wp-content/
+COPY ./ /var/www/html/wordpress/wp-content/
 EXPOSE 80
